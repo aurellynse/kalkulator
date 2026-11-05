@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalkulator jQuery</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    --bg: #f0e5d3; --body: #fff9f0; --text: #3a2f25; --muted: #7a6b58;
+    --screen: #f7eedf; --screen-text: #3a2f25;
+    --key: #fffdf8; --key-border: #e6d8c2;
+    --op: #a6c5ea; --op-text: #1f2a38;
+    --eq: #e68abe; --eq-text: #2e1424;
+    --clear: #ede0cb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1f1a16; --body: #2a2420; --text: #f3eadb; --muted: #b0a290;
+      --screen: #1b1713; --screen-text: #f6eee1;
+      --key: #382f29; --key-border: #4b4037;
+      --op: #849dbb; --op-text: #1f2a38;
+      --eq: #e68abe; --eq-text: #2e1424;
+      --clear: #4b4037;
+    }
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+    background: var(--bg); color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .calc {
+    width: 100%; max-width: 340px; background: var(--body);
+    border-radius: 22px; padding: 20px;
+    box-shadow: 0 10px 30px rgba(90, 60, 30, .14);
+  }
+  .identity { margin: 0 0 14px; line-height: 1.5; }
+  .identity .nama { font-size: 1.05rem; font-weight: 600; }
+  .identity .nim { font-size: .85rem; color: var(--muted); }
+  .screen {
+    background: var(--screen); color: var(--screen-text);
+    border: 1px solid var(--key-border); border-radius: 12px;
+    padding: 10px 14px; margin-bottom: 14px; text-align: right;
+    min-height: 82px; display: flex; flex-direction: column; justify-content: flex-end;
+    overflow: hidden;
+  }
+  .screen .history { min-height: 1.2em; font-size: .8rem; color: var(--muted); }
+  .screen .value { font-size: 2rem; font-weight: 600; font-variant-numeric: tabular-nums; overflow-x: auto; white-space: nowrap; }
+  .pad { display: grid; grid-template-columns: 3fr 1fr; gap: 10px; }
+  .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .ops { display: grid; grid-template-rows: repeat(4, 1fr); gap: 10px; }
+  button {
+    font: inherit; font-size: 1.2rem; font-weight: 600; cursor: pointer;
+    min-height: 56px; border-radius: 12px; border: 1px solid var(--key-border);
+    background: var(--key); color: var(--text);
+    box-shadow: 0 2px 0 var(--key-border);
+    transition: transform .08s ease, filter .12s ease;
+  }
+  button:active { transform: translateY(2px); box-shadow: none; }
+  button:hover { filter: brightness(.96); }
+  button:focus-visible { outline: 3px solid var(--op); outline-offset: 2px; }
+  .op { background: var(--op); color: var(--op-text); border-color: transparent; box-shadow: 0 2px 0 #6b84a3; }
+  .op.active { outline: 3px solid var(--eq); outline-offset: 2px; }
+  .clear { background: var(--clear); }
+  .equal {
+    width: 100%; margin-top: 10px; background: var(--eq); color: var(--eq-text);
+    border-color: transparent; font-size: 1.5rem; box-shadow: 0 2px 0 #c46fa0;
+  }
+  @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+</style>
+</head>
+<body>
+  <main class="calc">
+    <!-- Ganti NIM dan nama di bawah ini -->
+    <header class="identity">
+      <div class="nama">Aurellia Azzahra Kacaribu</div>
+      <div class="nim">NIM 255150701111026</div>
+    </header>
+
+    <div class="screen" aria-live="polite">
+      <div class="history" id="history"></div>
+      <div class="value" id="display">0</div>
+    </div>
+
+    <div class="pad">
+      <div class="numbers">
+        <button class="num" data-v="7">7</button>
+        <button class="num" data-v="8">8</button>
+        <button class="num" data-v="9">9</button>
+        <button class="num" data-v="4">4</button>
+        <button class="num" data-v="5">5</button>
+        <button class="num" data-v="6">6</button>
+        <button class="num" data-v="1">1</button>
+        <button class="num" data-v="2">2</button>
+        <button class="num" data-v="3">3</button>
+        <button class="num" data-v="0">0</button>
+        <button class="num" data-v=".">.</button>
+        <button class="clear" id="clear">C</button>
+      </div>
+      <div class="ops">
+        <button class="op" data-op="+" aria-label="tambah">+</button>
+        <button class="op" data-op="-" aria-label="kurang">−</button>
+        <button class="op" data-op="*" aria-label="kali">×</button>
+        <button class="op" data-op="/" aria-label="bagi">÷</button>
+      </div>
+    </div>
+
+    <button class="equal" id="equal" aria-label="sama dengan">=</button>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script>
+  $(function () {
+    var current = "0", prev = null, op = null, fresh = false;
+    var symbol = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+
+    function show() {
+      $("#display").text(current);
+      $("#history").text(prev !== null && op ? prev + " " + symbol[op] : "");
+      $(".op").removeClass("active").filter(function () {
+        return $(this).data("op") === op && fresh;
+      }).addClass("active");
+    }
+
+    function calc(a, b, o) {
+      a = parseFloat(a); b = parseFloat(b);
+      if (o === "+") return a + b;
+      if (o === "-") return a - b;
+      if (o === "*") return a * b;
+      if (o === "/") return b === 0 ? NaN : a / b;
+      return b;
+    }
+
+    function fmt(n) {
+      if (!isFinite(n)) return "Error";
+      return String(parseFloat(n.toPrecision(12)));
+    }
+
+    function reset() { current = "0"; prev = null; op = null; fresh = false; }
+
+    function pressNum(v) {
+      if (current === "Error") reset();
+      if (fresh) { current = "0"; fresh = false; }
+      if (v === ".") {
+        if (current.indexOf(".") === -1) current += ".";
+      } else {
+        current = current === "0" ? v : current + v;
+      }
+      show();
+    }
+
+    function pressOp(o) {
+      if (current === "Error") return;
+      if (op && !fresh) { current = fmt(calc(prev, current, op)); }
+      prev = current; op = o; fresh = true;
+      if (current === "Error") { reset(); current = "Error"; }
+      show();
+    }
+
+    function pressEqual() {
+      if (op === null || prev === null) return;
+      var left = prev;
+      var result = fmt(calc(prev, current, op));
+      $("#history").text(left + " " + symbol[op] + " " + current + " =");
+      current = result; prev = null; op = null; fresh = true;
+      $("#display").text(current);
+      $(".op").removeClass("active");
+    }
+
+    $(".num").on("click", function () { pressNum($(this).data("v").toString()); });
+    $(".op").on("click", function () { pressOp($(this).data("op")); });
+    $("#equal").on("click", pressEqual);
+    $("#clear").on("click", function () { reset(); show(); });
+
+    $(document).on("keydown", function (e) {
+      var k = e.key;
+      if (/^[0-9.]$/.test(k)) pressNum(k);
+      else if ("+-*/".indexOf(k) !== -1) pressOp(k);
+      else if (k === "Enter" || k === "=") { e.preventDefault(); pressEqual(); }
+      else if (k === "Escape" || k === "c" || k === "C") { reset(); show(); }
+      else if (k === "Backspace" && !fresh && current !== "Error") {
+        current = current.length > 1 ? current.slice(0, -1) : "0"; show();
+      }
+    });
+  });
+  </script>
+</body>
+</html>
